@@ -4,6 +4,8 @@
  * this is board class
  */
 
+import java.util.Arrays;
+
 import edu.princeton.cs.algs4.Queue;
 
 public class Board {
@@ -11,7 +13,7 @@ public class Board {
     private final int N; //dimension
     
     public Board(int[][] blocks) {
-        board = blocks.clone();
+        board = blocks.clone(); //this is only shallow clone
         N = board.length;
     }
     
@@ -38,7 +40,7 @@ public class Board {
             for (int j = 0; j < N; j++) {
                 if (board[i][j] == 0)            continue;
                 int[] mat = ind2mat(board[i][j]);
-                dist += (mat[0] - i) + (mat[1] - j);
+                dist += Math.abs(mat[0] - i) + Math.abs(mat[1] - j);
             }
         }
         return dist;
@@ -127,21 +129,20 @@ public class Board {
     private void exch(Queue<Board> q, int i, int j, int x, int y) {
         if (x < 0 || x >= N || y < 0 || y >= N ) 
             return;
-        int[][] blks = new int[N][N];
-        blks = board.clone();
+        Board board = exch(i, j, x, y);
         
-        int t = blks[i][j];
-        blks[i][j] = blks[x][y];
-        blks[x][y] = t;
-        
-        q.enqueue(new Board(blks));     
+        q.enqueue(board);     
     }
     
     //only used in twin
     //so no need to check 0
     private Board exch(int i, int j, int x, int y) {
         int[][] blks = new int[N][N];
-        blks = board.clone();
+        
+        //.clone is only a shallow copy
+        // this is the deep copy
+        for (int line = 0; line < blks.length; line++)
+            blks[line] = Arrays.copyOf(board[line], board.length);
         
         int t = blks[i][j];
         blks[i][j] = blks[x][y];
