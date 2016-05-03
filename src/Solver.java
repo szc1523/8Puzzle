@@ -7,32 +7,34 @@
 import edu.princeton.cs.algs4.In;
 import edu.princeton.cs.algs4.MinPQ;
 import edu.princeton.cs.algs4.StdOut;
+import edu.princeton.cs.algs4.Stack;
 
 public class Solver {
-    private MinPQ<Node> pq = new MinPQ<Node>();
-    private boolean isSov = false;
-    private Node end; //the final point
+    private MinPQ<Node> pqR = new MinPQ<Node>(); //solve for real node
+    private MinPQ<Node> pqT = new MinPQ<Node>(); //solve for twin node
+    private final boolean isSov;
+    private final Node end; //the final point
     
     private static class Node implements Comparable<Node> {
-        private Board b;    //current board
-        private Board pb;   //previous board
+        private Board b;      //board
+        private Node pNode;   //previous node
         private int   cnt;  //number of moves already made
         private int   cost; //hamming dist or manhattan dist
         
         //this is only for initial Node
-        public Node(Board initial) {
-            b    = initial; //should clone or not?
-            pb   = null;
-            cnt  = 0;
-            cost = b.manhattan() + cnt;
+        Node(Board initial) {
+            b     = initial; //should clone or not?
+            pNode = null;
+            cnt   = 0;
+            cost  = b.manhattan() + cnt;
         }
         
         //common constructor
-        public Node(Board cur, Board pre, int count) {
-            b    = cur; //should clone or not?
-            pb   = pre;
-            cnt  = count;
-            cost = b.manhattan() + count;
+        Node(Board cur, Node pre, int count) {
+            b     = cur; //should clone or not?
+            pNode = pre;
+            cnt   = count;
+            cost  = b.manhattan() + count;
         }
         
         //for comparable interface
@@ -42,21 +44,42 @@ public class Solver {
     }
     
     public Solver(Board initial) {
-        Node in = new Node(initial);
-              
-        while (!in.b.isGoal()) {
-            for (Board i : in.b.neighbors()) {
-                if (!i.equals(in.pb)) {
-                    int count = in.cnt;
+        Node nodeR = new Node(initial); //the real node
+        Node nodeT = new Node(initial.twin()); //the twin node
+        
+        while (!nodeR.b.isGoal() && !nodeT.b.isGoal()) {
+            //real node
+            for (Board i : nodeR.b.neighbors()) {
+                // == null means the first enqueue
+                if (nodeR.pNode == null || !i.equals(nodeR.pNode.b)) { 
+                    int count = nodeR.cnt;
                     count++;
-                    Node n = new Node(i, in.b, count);
-                    pq.insert(n);
+                    Node n = new Node(i, nodeR, count);
+                    pqR.insert(n);
                 }
             }
-            in = pq.delMin();
+            nodeR = pqR.delMin();
+            //twin node
+            for (Board i : nodeT.b.neighbors()) {
+                // == null means the first enqueue
+                if (nodeT.pNode == null || !i.equals(nodeT.pNode.b)) {
+                    int count = nodeT.cnt;
+                    count++;
+                    Node n = new Node(i, nodeT, count);
+                    pqT.insert(n);
+                }
+            }
+            nodeT = pqT.delMin();
         }
-        end = in;
-        isSov = true;
+        
+        if (nodeR.b.isGoal()) {
+            isSov = true;
+            end = nodeR;
+        }       
+        else {
+            isSov = false;
+            end = null;
+        }
     }
     
     public boolean isSolvable() {
@@ -64,9 +87,25 @@ public class Solver {
     }
     
     public int moves() {
-        return end.cnt;
-    }
+        if (isSolvable())
+            return end.cnt;
+        else
+            return -1;
+    }    
     
+    public Iterable<Board> solution() {
+        if (!isSov) return null;
+        
+        Stack<Board> s = new Stack<Board>();
+        
+        Node cur = end;
+        while (cur != null) {
+            s.push(cur.b);
+            cur = cur.pNode;
+        }
+        
+        return s;
+    }
     
     public static void main(String[] args) {
         // TODO Auto-generated method stub
@@ -89,14 +128,13 @@ public class Solver {
             StdOut.println(filename + ": " + solver.moves());
             
             // print solution to standard output
-/*            if (!solver.isSolvable())
+            if (!solver.isSolvable())
                 StdOut.println("No solution possible");
             else {
                 StdOut.println("Minimum number of moves = " + solver.moves());
                 for (Board board : solver.solution())
                     StdOut.println(board);
-            }*/
-            
+            }           
         }
     }
 

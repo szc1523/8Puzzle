@@ -13,7 +13,11 @@ public class Board {
     private final int N; //dimension
     
     public Board(int[][] blocks) {
+        //must .clone firstly
         board = blocks.clone(); //this is only shallow clone
+        
+        for (int line = 0; line < blocks.length; line++)
+            board[line] = Arrays.copyOf(blocks[line], blocks.length);        
         N = board.length;
     }
     
@@ -52,14 +56,13 @@ public class Board {
     }
     
     public Board twin() {
-        int i = 0;
-        int [] mat1 = new int[2];
-        int [] mat2 = new int[2];
+        //firstly I witer mat1 = new int[][]
+        //it's wrong because in the ind2mat i already allocate spaces!!!!
+        int[] mat1 = ind2mat(1); //first and second tile
+        int[] mat2 = ind2mat(2);
 
-        mat1 = ind2mat(i);
-        mat2 = ind2mat(i + 1);
-        if (board[mat1[0]][mat1[1]] == 0)     mat1 = ind2mat(i + 2);
-        else if(board[mat2[0]][mat2[1]] == 0) mat2 = ind2mat(i + 2);
+        if (board[mat1[0]][mat1[1]] == 0)     mat1 = ind2mat(3);
+        else if (board[mat2[0]][mat2[1]] == 0) mat2 = ind2mat(3);
         
         return exch(mat1[0], mat1[1], mat2[0], mat2[1]);
     }
@@ -68,8 +71,11 @@ public class Board {
         //cite date.java
         if (other == this) return true;
         if (other == null) return false;
-        if (other.getClass() != this.getClass()) return false;
+        if (other.getClass() != this.getClass()) return false;        
         Board that = (Board) other;
+        // different dimension!!!!!
+        if (N != that.N) return false;
+        
         for (int i = 0; i < N; i++) {
             for (int j = 0; j < N; j++) {
                 if (this.board[i][j] != that.board[i][j]) 
@@ -102,8 +108,8 @@ public class Board {
     public String toString() {
         StringBuilder s = new StringBuilder();
         s.append(N + "\n");
-        for(int i = 0; i < N; i++) {
-            for(int j = 0; j < N; j++) {
+        for (int i = 0; i < N; i++) {
+            for (int j = 0; j < N; j++) {
                 s.append(String.format("%2d ", board[i][j]));
             }
             s.append("\n");
@@ -111,12 +117,13 @@ public class Board {
         return s.toString();
     }
 
-    private int mat2ind (int i, int j) {
+    private int mat2ind(int i, int j) {
         return i * N + j + 1;
     }    
     
     // input i >= 1
-    private int[] ind2mat (int i) {
+    private int[] ind2mat(int i) {
+        assert (i >= 1);
         int[] mat = new int[2];
         i--;
         mat[0] = i / N;
@@ -127,15 +134,15 @@ public class Board {
     //there should be enumerator up down left right
     //exchange and enqueue
     private void exch(Queue<Board> q, int i, int j, int x, int y) {
-        if (x < 0 || x >= N || y < 0 || y >= N ) 
+        if (x < 0 || x >= N || y < 0 || y >= N) 
             return;
-        Board board = exch(i, j, x, y);
+        Board b = exch(i, j, x, y);
         
-        q.enqueue(board);     
+        q.enqueue(b);     
     }
     
-    //only used in twin
-    //so no need to check 0
+    //exchange by given matrix index
+    //return a Board
     private Board exch(int i, int j, int x, int y) {
         int[][] blks = new int[N][N];
         
