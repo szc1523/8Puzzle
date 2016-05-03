@@ -67,6 +67,7 @@ public class Board {
         return exch(mat1[0], mat1[1], mat2[0], mat2[1]);
     }
     
+    // should've add a hashcode method!!!!
     public boolean equals(Object other) {
         //cite date.java
         if (other == this) return true;
